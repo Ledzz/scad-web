@@ -93,10 +93,11 @@ export async function readStateFromFragment(): Promise<State | null> {
           extruderPickerVisibility: validateStringEnum(view?.extruderPickerVisibility, ['editing', 'exporting'], s => undefined),
           layout: {
             mode: validateStringEnum(view?.layout?.mode, ['multi', 'single']),
-            focus: validateStringEnum(view?.layout?.focus, ['editor', 'viewer', 'customizer'], s => false),
+            focus: validateStringEnum(view?.layout?.focus, ['editor', 'viewer', 'customizer', 'help'], s => false),
             editor: validateBoolean(view?.layout['editor']),
             viewer: validateBoolean(view?.layout['viewer']),
             customizer: validateBoolean(view?.layout['customizer']),
+            help: validateBoolean(view?.layout['help']),
           },
           collapsedCustomizerTabs: validateArray(view?.collapsedCustomizerTabs, validateString),
           color: validateString(view?.color, () => defaultModelColor),

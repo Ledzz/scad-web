@@ -15,6 +15,7 @@ import { ModelContext, FSContext } from './contexts.ts';
 import FilePicker, {  } from './FilePicker.tsx';
 import { Model } from '../state/model.ts';
 import { formatScad, FormatSkipped, preloadFormatter } from '../formatter/format.ts';
+import { setActiveEditor } from '../language/active-editor.ts';
 
 // const isMonacoSupported = false;
 const isMonacoSupported = (() => {
@@ -104,6 +105,7 @@ export default function EditorPanel({className, style}: {className?: string, sty
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS],
       run: () => model.saveProject()
     });
+    setActiveEditor(editor);
     setEditor(editor)
   }
 

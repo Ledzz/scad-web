@@ -29,6 +29,10 @@ Licenses: see [LICENSES](./LICENSE).
   see `formatter/openscad-formatting.scm`) compiled to WebAssembly and run in its own worker; output
   is byte-identical to the `topiary` CLI. The result is applied only if OpenSCAD parses it to the
   **same AST** as the original, so formatting can never change what the code does.
+- **Help panel**: an OpenSCAD cheatsheet next to the editor (the *Help* toggle/tab). Search it, click
+  a signature to insert it at the cursor with tab stops, follow ↗ to the manual. Hovering a builtin
+  in the editor shows the same entry. The data is `src/help/cheatsheet.ts`; `node
+  tests/cheatsheet-check.mjs` runs every snippet through OpenSCAD (needs a native `openscad-nightly`).
 - Customizer values become `-D` overrides only when you actually change them (the number inputs used
   to report every value on mount, after which editing that value in the code had no effect).
 

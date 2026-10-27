@@ -10,6 +10,7 @@ import { ModelContext, FSContext } from './contexts';
 import PanelSwitcher from './PanelSwitcher';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import CustomizerPanel from './CustomizerPanel';
+import HelpPanel from './HelpPanel';
 
 
 export function App({initialState, statePersister, fs}: {initialState: State, statePersister: StatePersister, fs: FS}) {
@@ -42,16 +43,25 @@ export function App({initialState, statePersister, fs}: {initialState: State, st
       editor: 3,
       viewer: 1,
       customizer: 0,
+      help: 0,
     },
     viewer: {
       editor: 2,
       viewer: 3,
       customizer: 1,
+      help: 0,
     },
     customizer: {
       editor: 0,
       viewer: 1,
       customizer: 3,
+      help: 0,
+    },
+    help: {
+      editor: 0,
+      viewer: 1,
+      customizer: 0,
+      help: 3,
     }
   }
 
@@ -59,7 +69,7 @@ export function App({initialState, statePersister, fs}: {initialState: State, st
   const mode = state.view.layout.mode;
   function getPanelStyle(id: MultiLayoutComponentId): CSSProperties {
     if (layout.mode === 'multi') {
-      const itemCount = (layout.editor ? 1 : 0) + (layout.viewer ? 1 : 0) + (layout.customizer ? 1 : 0)
+      const itemCount = (layout.editor ? 1 : 0) + (layout.viewer ? 1 : 0) + (layout.customizer ? 1 : 0) + (layout.help ? 1 : 0)
       return {
         flex: 1,
         maxWidth: Math.floor(100/itemCount) + '%',
@@ -99,6 +109,11 @@ export function App({initialState, statePersister, fs}: {initialState: State, st
               ${layout.mode === 'single' && layout.focus !== 'customizer' ? 'opacity-0' : ''}
               ${layout.mode === 'single' ? `absolute-fill` : ''}
             `} style={getPanelStyle('customizer')} />
+            <HelpPanel className={`
+              opacity-animated
+              ${layout.mode === 'single' && layout.focus !== 'help' ? 'opacity-0' : ''}
+              ${layout.mode === 'single' ? `absolute-fill` : ''}
+            `} style={getPanelStyle('help')} />
           </div>
 
           <Footer />

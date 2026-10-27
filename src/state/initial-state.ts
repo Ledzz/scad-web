@@ -45,6 +45,7 @@ export function createInitialState(state: State | null, source?: {content?: stri
           editor: true,
           viewer: true,
           customizer: false,
+          help: false,
         } as any,
 
         color: defaultModelColor,
@@ -59,13 +60,15 @@ export function createInitialState(state: State | null, source?: {content?: stri
         mode,
         editor: true,
         viewer: true,
-        customizer: initialState.view.layout.focus == 'customizer'
+        customizer: initialState.view.layout.focus == 'customizer',
+        help: initialState.view.layout.focus == 'help',
       }
     } else if (mode === 'single' && initialState.view.layout.mode === 'multi') {
       initialState.view.layout = {
         mode,
         focus: initialState.view.layout.viewer ? 'viewer'
           : initialState.view.layout.customizer ? 'customizer'
+          : initialState.view.layout.help ? 'help'
           : 'editor'
       }
     }

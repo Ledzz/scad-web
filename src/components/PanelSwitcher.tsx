@@ -19,6 +19,7 @@ export default function PanelSwitcher() {
   if ((state.parameterSet?.parameters?.length ?? 0) > 0) {
     singleTargets.push({ id: 'customizer', icon: 'pi pi-sliders-h', label: 'Customize' });
   }
+  singleTargets.push({ id: 'help', icon: 'pi pi-book', label: 'Help' });
   const multiTargets = singleTargets;
 
   return (
@@ -47,13 +48,15 @@ export default function PanelSwitcher() {
                   )}
               </div>
           :   <>
+                {/* Controlled (onTabChange), so the highlight follows focus changes made in
+                    code too, e.g. picking a Help entry switches back to the editor. */}
                 <TabMenu
                   activeIndex={singleTargets.map(t => t.id).indexOf(state.view.layout.focus)}
+                  onTabChange={e => model.changeSingleVisibility(singleTargets[e.index].id)}
                   style={{
                     flex: 1,
                   }}
-                  model={singleTargets.map(({icon, label, id}) => 
-                  ({icon, label, command: () => model.changeSingleVisibility(id)}))} />
+                  model={singleTargets.map(({icon, label}) => ({icon, label}))} />
               </>
         }
       </div>
