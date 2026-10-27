@@ -14,6 +14,32 @@ Enjoy!
 
 Licenses: see [LICENSES](./LICENSE).
 
+## This fork: faster, and formats your code
+
+- **OpenSCAD 2026.10.25** WASM snapshot (`libs-config.json`) instead of the 2025.03 playground build.
+  Two fixes it needed: BrowserFS's node/stream ops are bound to their objects (newer emscripten calls
+  them unbound), and `parseOff` reads the counts from the line after a bare `OFF` header.
+- **Warm, long-lived OpenSCAD workers** (`src/runner/openscad-runner.ts`). Each lane (`render`,
+  `check`, `format`, `plain`) keeps one OpenSCAD instance across runs (`noExitRuntime`, so `callMain`
+  can run again), like the desktop app between F5s: no WASM start-up or library mounting per run, and
+  the geometry cache survives. A cube re-renders in ~2 ms of OpenSCAD time instead of ~240 ms.
+  Render/syntax-check debounces are 250/150 ms (were 1000/300).
+- **Formatting**: Cmd/Ctrl+S, Shift+Alt+F or *Format document* in the editor menu. It is
+  [Topiary](https://topiary.tweag.io/) 0.8 with the OpenSCAD rules (plus two fixes for glued tokens,
+  see `formatter/openscad-formatting.scm`) compiled to WebAssembly and run in its own worker; output
+  is byte-identical to the `topiary` CLI. The result is applied only if OpenSCAD parses it to the
+  **same AST** as the original, so formatting can never change what the code does.
+- Customizer values become `-D` overrides only when you actually change them (the number inputs used
+  to report every value on mount, after which editing that value in the code had no effect).
+
+Building the formatter (`npm run build:formatter`, included in `build:all`) needs rustup with the
+`wasm32-unknown-unknown` target, `wasm-bindgen` 0.2.129 and a clang with a wasm32 backend
+(emscripten's is picked up automatically). `formatter/vendor-topiary.sh` documents how the vendored
+Topiary crates were patched to build for wasm32.
+
+The dev server no longer hot-reloads (the two-compiler build sent it into a reload loop): reload the
+page by hand after a rebuild.
+
 ## Features
 
 - Automatic preview on edit (F5), and full rendering on Ctrl+Enter (or F6). Using a trick to force $preview=true.

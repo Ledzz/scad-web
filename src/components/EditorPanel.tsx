@@ -8,10 +8,13 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { Button } from 'primereact/button';
 import { MenuItem } from 'primereact/menuitem';
 import { Menu } from 'primereact/menu';
+import { Toast } from 'primereact/toast';
 import { buildUrlForStateParams } from '../state/fragment-state.ts';
 import { getBlankProjectState, defaultSourcePath } from '../state/initial-state.ts';
 import { ModelContext, FSContext } from './contexts.ts';
 import FilePicker, {  } from './FilePicker.tsx';
+import { Model } from '../state/model.ts';
+import { formatScad, FormatSkipped, preloadFormatter } from '../formatter/format.ts';
 
 // const isMonacoSupported = false;
 const isMonacoSupported = (() => {
@@ -21,9 +24,33 @@ const isMonacoSupported = (() => {
   return !(iosWk || android);
 })();
 
+// What the formatting provider formats for, refreshed on every render since
+// the provider is registered once but the panel (and its toast) can remount.
+let formatModel: Model | null = null;
+let formatNotify: (message: string) => void = console.warn;
+
 let monacoInstance: Monaco | null = null;
 if (isMonacoSupported) {
-  loader.init().then(mi => monacoInstance = mi);
+  loader.init().then(mi => {
+    monacoInstance = mi;
+    // Backs "Format Document" (Shift+Alt+F) and Cmd/Ctrl+S below.
+    mi.languages.registerDocumentFormattingEditProvider('openscad', {
+      async provideDocumentFormattingEdits(textModel) {
+        const params = formatModel?.state.params;
+        if (!params?.activePath.endsWith('.scad')) return [];
+        const source = textModel.getValue();
+        try {
+          const formatted = await formatScad(params.activePath, params.sources, source);
+          if (formatted === source) return [];
+          return [{range: textModel.getFullModelRange(), text: formatted}];
+        } catch (e) {
+          if (e instanceof FormatSkipped) formatNotify(`Not formatted: ${e.message}`);
+          else console.error('Formatting failed:', e);
+          return [];
+        }
+      },
+    });
+  });
 }
 
 export default function EditorPanel({className, style}: {className?: string, style?: CSSProperties}) {
@@ -32,8 +59,12 @@ export default function EditorPanel({className, style}: {className?: string, sty
   if (!model) throw new Error('No model');
 
   const menu = useRef<Menu>(null);
+  const toast = useRef<Toast>(null);
 
   const state = model.state;
+
+  formatModel = model;
+  formatNotify = (detail) => toast.current?.show({severity: 'warn', summary: 'Format', detail, life: 3000});
 
   const [editor, setEditor] = useState(null as monaco.editor.IStandaloneCodeEditor | null)
 
@@ -58,12 +89,15 @@ export default function EditorPanel({className, style}: {className?: string, sty
       label: "Preview OpenSCAD",
       run: () => model.render({isPreview: true, now: true})
     });
+    // Nothing to save to (sources live in the URL / localStorage), so Cmd+S
+    // formats, like scad-live's format-on-save. The edit re-renders the model.
     editor.addAction({
-      id: "openscad-save-do-nothing",
-      label: "Save (disabled)",
+      id: "openscad-save-format",
+      label: "Format document (save)",
       keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: () => {}
+      run: (ed) => ed.getAction('editor.action.formatDocument')?.run()
     });
+    preloadFormatter();
     editor.addAction({
       id: "openscad-save-project",
       label: "Save OpenSCAD project",
@@ -129,6 +163,11 @@ export default function EditorPanel({className, style}: {className?: string, sty
           },
           {
             separator: true
+          },
+          {
+            label: 'Format document',
+            icon: 'pi pi-align-left',
+            command: () => editor?.getAction('editor.action.formatDocument')?.run(),
           },
           {
             label: 'Select All',
@@ -197,7 +236,8 @@ export default function EditorPanel({className, style}: {className?: string, sty
           <pre key={i}>{text}</pre>
         ))}
       </div>
-    
+
+      <Toast ref={toast} position='bottom-left' />
     </div>
   )
 }

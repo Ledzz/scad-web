@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "homepage": "https://ochafik.com/openscad2/",
+  "homepage": "https://ledzz.github.io/scad-web/",
   "dependencies": {
     "@gltf-transform/core": "4.1.1",
     "@gltf-transform/extensions": "4.1.1",
@@ -37,7 +37,8 @@
     "build:libs:clean": "LIBS_BUILD_MODE=clean webpack --config webpack.libs.config.js",
     "build:libs:wasm": "LIBS_BUILD_MODE=wasm webpack --config webpack.libs.config.js",
     "build:libs:fonts": "LIBS_BUILD_MODE=fonts webpack --config webpack.libs.config.js",
-    "build:all": "npm run build:libs && npm run build"
+    "build:formatter": "bash formatter/build.sh",
+    "build:all": "npm run build:libs && npm run build:formatter && npm run build"
   },
   "eslintConfig": {
     "extends": [

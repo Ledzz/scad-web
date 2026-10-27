@@ -1,0 +1,62 @@
+diff -ru a/src/language.rs b/src/language.rs
+--- a/src/language.rs	2026-10-27 11:54:30
++++ b/src/language.rs	2026-10-27 11:54:30
+@@ -74,7 +74,7 @@
+         }
+ 
+         #[inline]
+-        pub fn name(&self) -> Option<&'static str> {
++        pub fn name(&self) -> Option<&str> {
+             self.inner.name()
+         }
+     }
+diff -ru a/src/logger.rs b/src/logger.rs
+--- a/src/logger.rs	2026-10-27 11:54:30
++++ b/src/logger.rs	2026-10-27 11:54:30
+@@ -2,17 +2,17 @@
+ mod native {
+     pub type LogType = tree_sitter::LogType;
+ 
+-    pub type Logger<'a> = Box<dyn FnMut(LogType, &str) + 'a>;
++    pub type Logger<'a> = Box<dyn FnMut(LogType, &str) + Send + 'a>;
+ 
+     pub struct LoggerReturn<'a, 's> {
+         #[allow(clippy::borrowed_box, clippy::type_complexity)]
+-        pub inner: &'s Box<dyn FnMut(LogType, &str) + 'a>,
++        pub inner: &'s Box<dyn FnMut(LogType, &str) + Send + 'a>,
+     }
+ 
+     impl<'a, 's> LoggerReturn<'a, 's> {
+         #[allow(clippy::borrowed_box, clippy::type_complexity)]
+         #[inline]
+-        pub(crate) fn new(inner: &'s Box<dyn FnMut(LogType, &str) + 'a>) -> Self {
++        pub(crate) fn new(inner: &'s Box<dyn FnMut(LogType, &str) + Send + 'a>) -> Self {
+             Self { inner }
+         }
+     }
+diff -ru a/src/node.rs b/src/node.rs
+--- a/src/node.rs	2026-10-27 11:54:30
++++ b/src/node.rs	2026-10-27 11:54:30
+@@ -148,7 +148,9 @@
+ 
+         #[inline]
+         pub fn language_name(&self) -> Option<&'static str> {
+-            self.inner.language().name()
++            // topiary-core only calls this to label a parse error, so leaking
++            // the few bytes of the name there keeps its 'static signature.
++            self.inner.language().name().map(|name| &*Box::leak(name.to_owned().into_boxed_str()))
+         }
+ 
+         #[inline]
+diff -ru a/src/query_match.rs b/src/query_match.rs
+--- a/src/query_match.rs	2026-10-27 11:54:30
++++ b/src/query_match.rs	2026-10-27 11:54:30
+@@ -17,7 +17,7 @@
+ 
+         #[inline]
+         fn captures(&self) -> impl ExactSizeIterator<Item = QueryCapture<'tree>> {
+-            self.captures.iter().map(Into::into)
++            self.captures().iter().map(Into::into)
+         }
+     }
+ }

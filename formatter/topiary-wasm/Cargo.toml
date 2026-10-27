@@ -1,0 +1,36 @@
+[package]
+name = "topiary-scad"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Topiary's OpenSCAD formatter compiled to WebAssembly for the playground"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Same engine as the `topiary` 0.8.0 CLI that scad-fmt uses. The vendored
+# copies (see ../vendor-topiary.sh) take the CLI's native code path on wasm32
+# too, with the tree-sitter C runtime compiled to wasm instead of
+# web-tree-sitter, so the browser and the terminal format identically.
+topiary-core = "=0.8.0"
+topiary-tree-sitter-facade = "=0.8.0"
+tree-sitter = "=0.27.1"
+# The wasm stdlib shims (malloc, string.h, ...) the C runtime needs on
+# wasm32-unknown-unknown; 0.1.9 pairs with tree-sitter 0.27 (0.26 traps).
+tree-sitter-language = "=0.1.9"
+# Must match the wasm-bindgen CLI exactly (brew: wasm-bindgen 0.2.129).
+wasm-bindgen = "=0.2.129"
+console_error_panic_hook = "0.1"
+
+[build-dependencies]
+cc = "1"
+
+[patch.crates-io]
+topiary-core = { path = "../vendor/topiary-core-0.8.0" }
+topiary-tree-sitter-facade = { path = "../vendor/topiary-tree-sitter-facade-0.8.0" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1

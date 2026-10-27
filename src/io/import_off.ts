@@ -10,9 +10,11 @@ export function parseOff(content: string): IndexedPolyhedron {
     if (lines[0].match(/^OFF(\s|$)/)) {
         counts = lines[0].substring(3).trim();
         currentLine = 1;
-    } else if (lines[currentLine] === 'OFF' && lines.length > 1) {
-        counts = lines[1];
-        currentLine = 2;
+        // Newer OpenSCAD puts the counts on their own line after "OFF".
+        if (counts === '' && lines.length > 1) {
+            counts = lines[1];
+            currentLine = 2;
+        }
     } else {
         throw new Error('Invalid OFF file: missing OFF header');
     }

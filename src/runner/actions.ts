@@ -1,14 +1,18 @@
 // Portions of this file are Copyright 2021 Google LLC, and licensed under GPL2+. See COPYING.
 
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
-import { ProcessStreams, spawnOpenSCAD } from "./openscad-runner.ts";
+import { ProcessStreams, spawnOpenSCAD, warmUpOpenSCAD } from "./openscad-runner.ts";
 import { processMergedOutputs } from "./output-parser.ts";
 import { AbortablePromise, turnIntoDelayableExecution } from '../utils.ts';
 import { Source } from '../state/app-state.ts';
 import { VALID_EXPORT_FORMATS_2D, VALID_EXPORT_FORMATS_3D } from '../state/formats.ts';
 import { ParameterSet } from '../state/customizer-types.ts';
 
-const syntaxDelay = 300;
+// The workers keep a warm OpenSCAD instance, so a small model renders in
+// tens of ms and these debounces are most of the latency after typing.
+warmUpOpenSCAD('render', 'check');
+
+const syntaxDelay = 150;
 
 type SyntaxCheckArgs = {
   activePath: string,
@@ -32,7 +36,7 @@ export const checkSyntax =
       outputPaths: [outFile],
     }, (streams) => {
       console.log(JSON.stringify(streams));
-    });
+    }, 'check');
 
     return AbortablePromise<SyntaxCheckOutput>((res, rej) => {
       (async () => {
@@ -70,7 +74,7 @@ export const checkSyntax =
     });
   });
 
-var renderDelay = 1000;
+var renderDelay = 250;
 export type RenderOutput = {
   outFile: File,
   logText: string,

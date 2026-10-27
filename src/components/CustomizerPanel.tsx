@@ -20,7 +20,16 @@ export default function CustomizerPanel({className, style}: {className?: string,
   const state = model.state;
 
   const handleChange = (name: string, value: any) => {
-    model.setVar(name, value);
+    // InputNumber reports its value on mount, unprompted. Storing that as an
+    // override would pin the parameter (-D beats the code), so editing its
+    // value in the editor would stop having any effect. Only a value that
+    // differs from the one in effect is a change, and going back to the
+    // code's own value drops the override.
+    const initial = state.parameterSet?.parameters.find(p => p.name === name)?.initial;
+    const vars = state.params.vars ?? {};
+    const same = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+    if (same(value, name in vars ? vars[name] : initial)) return;
+    model.setVar(name, same(value, initial) ? undefined : value);
   };
 
   const groupedParameters = (state.parameterSet?.parameters ?? []).reduce((acc, param) => {

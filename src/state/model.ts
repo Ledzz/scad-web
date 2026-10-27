@@ -53,8 +53,12 @@ export class Model {
       if (exportFormat3D != null) s.params.exportFormat3D = exportFormat3D;
     });
   }
+  // value === undefined drops the override, so the code's own value applies again.
   setVar(name: string, value: any) {
-    this.mutate(s => s.params.vars = {...s.params.vars ?? {}, [name]: value});
+    this.mutate(s => {
+      const {[name]: _, ...others} = s.params.vars ?? {};
+      s.params.vars = value === undefined ? others : {...others, [name]: value};
+    });
     this.render({isPreview: true, now: false});
   }
 

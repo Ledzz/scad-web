@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # Formatter toolchain (formatter/build.sh): Rust's wasm32 target, the
+      # wasm-bindgen CLI matching the crate, and a clang with a wasm32 backend.
+      - run: rustup target add wasm32-unknown-unknown
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-bindgen@0.2.129
+      - run: sudo apt-get update && sudo apt-get install -y clang llvm
+      - run: npm install
+      - run: npm run build:all
+        env:
+          CLANG: clang
+          LLVM_AR: llvm-ar
+      - run: NODE_ENV=development npm run test:e2e
+        env:
+          CI: true
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

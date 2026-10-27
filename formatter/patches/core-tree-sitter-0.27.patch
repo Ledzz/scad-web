@@ -1,0 +1,32 @@
+diff -ru a/src/tree_sitter.rs b/src/tree_sitter.rs
+--- a/src/tree_sitter.rs	2026-10-27 11:55:10
++++ b/src/tree_sitter.rs	2026-10-27 11:55:10
+@@ -187,8 +187,7 @@
+     let mut matches = query.query.matches(&root, source, &mut cursor);
+     #[allow(clippy::while_let_on_iterator)] // Not a normal iterator
+     while let Some(query_match) = matches.next() {
+-        let content_captures = query_match
+-            .captures()
++        let content_captures = topiary_tree_sitter_facade::QueryMatch::captures(query_match)
+             .filter(|c| c.name(&capture_names) == "injection.content")
+             .collect::<Vec<_>>();
+ 
+@@ -213,8 +212,7 @@
+             })
+             .map(|s| s.to_string())
+             .or_else(|| {
+-                query_match
+-                    .captures()
++                topiary_tree_sitter_facade::QueryMatch::captures(query_match)
+                     .find(|c| c.name(&capture_names) == "injection.language")
+                     .and_then(|c| c.node().utf8_text(source).ok())
+                     .map(|s| s.to_string())
+@@ -493,7 +491,7 @@
+     let mut query_matches = query.query.matches(&root, source, &mut cursor);
+     #[allow(clippy::while_let_on_iterator)] // This is not a normal iterator
+     while let Some(query_match) = query_matches.next() {
+-        let local_captures: Vec<QueryCapture> = query_match.captures().collect();
++        let local_captures: Vec<QueryCapture> = topiary_tree_sitter_facade::QueryMatch::captures(query_match).collect();
+ 
+         matches.push(LocalQueryMatch {
+             pattern_index: query_match.pattern_index(),

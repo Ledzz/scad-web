@@ -66,6 +66,11 @@ const config = [
       static: path.join(__dirname, 'dist'),
       compress: true,
       port: 4000,
+      // This is a two-compiler build (app + workers): the client gets the
+      // combined hash, never finds a hot update for it, and reloads the page
+      // forever. Reload by hand after a rebuild instead.
+      hot: false,
+      liveReload: false,
     },
     plugins: [
       new webpack.EnvironmentPlugin({
@@ -121,9 +126,12 @@ const config = [
     ],
   },
   {
-    entry: './src/runner/openscad-worker.ts',
+    entry: {
+      'openscad-worker': './src/runner/openscad-worker.ts',
+      'formatter-worker': './src/formatter/formatter-worker.ts',
+    },
     output: {
-      filename: 'openscad-worker.js',
+      filename: '[name].js',
       path: path.resolve(__dirname, 'dist'),
       globalObject: 'self',
       // library: {
