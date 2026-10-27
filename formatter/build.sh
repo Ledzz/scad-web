@@ -14,9 +14,10 @@ cd "$(dirname "$0")"
 export PATH="/opt/homebrew/opt/rustup/bin:$HOME/.cargo/bin:$PATH"
 
 llvm=$(em-config LLVM_ROOT 2>/dev/null || true)
-CLANG=${CLANG:-$llvm/clang}
-LLVM_AR=${LLVM_AR:-$llvm/llvm-ar}
-[ -x "$CLANG" ] || { echo "no wasm-capable clang: set CLANG=/path/to/clang" >&2; exit 1; }
+# Each may be a path or a command name (CI passes CLANG=clang LLVM_AR=llvm-ar).
+CLANG=$(command -v "${CLANG:-$llvm/clang}" || true)
+LLVM_AR=$(command -v "${LLVM_AR:-$llvm/llvm-ar}" || true)
+[ -n "$CLANG" ] && [ -n "$LLVM_AR" ] || { echo "no wasm-capable clang/llvm-ar: set CLANG and LLVM_AR" >&2; exit 1; }
 
 (cd topiary-wasm && CC_wasm32_unknown_unknown="$CLANG" AR_wasm32_unknown_unknown="$LLVM_AR" \
   cargo build --release --target wasm32-unknown-unknown)
