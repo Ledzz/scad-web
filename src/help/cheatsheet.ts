@@ -183,3 +183,17 @@ for (const section of cheatsheet) {
     if (entry.name) cheatsheetByName.set(entry.name, [...(cheatsheetByName.get(entry.name) ?? []), entry]);
   }
 }
+
+/** The sections and entries matching every word of the query (all of them for an empty one). */
+export function searchCheatsheet(query: string): HelpSection[] {
+  const words = query.toLowerCase().split(/\s+/).filter(w => w);
+  return cheatsheet
+    .map(section => ({
+      ...section,
+      entries: section.entries.filter(e => {
+        const text = `${section.title} ${e.name ?? ''} ${e.sig} ${e.doc}`.toLowerCase();
+        return words.every(w => text.includes(w));
+      }),
+    }))
+    .filter(section => section.entries.length > 0);
+}

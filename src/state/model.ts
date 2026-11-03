@@ -61,6 +61,20 @@ export class Model {
     });
     this.render({isPreview: true, now: false});
   }
+  // A customizer value, as the Customizer panel and the WebMCP tools set it.
+  // InputNumber reports its value on mount, unprompted. Storing that as an
+  // override would pin the parameter (-D beats the code), so editing its
+  // value in the editor would stop having any effect. Only a value that
+  // differs from the one in effect is a change, and going back to the
+  // code's own value drops the override. True if it changed anything.
+  setParameter(name: string, value: any) {
+    const initial = this.state.parameterSet?.parameters.find(p => p.name === name)?.initial;
+    const vars = this.state.params.vars ?? {};
+    const same = (a: any, b: any) => JSON.stringify(a) === JSON.stringify(b);
+    if (same(value, name in vars ? vars[name] : initial)) return false;
+    this.setVar(name, same(value, initial) ? undefined : value);
+    return true;
+  }
 
   set logsVisible(value: boolean) {
     if (value) {

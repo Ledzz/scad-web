@@ -5,7 +5,7 @@ import React, { CSSProperties, useContext, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { InputText } from 'primereact/inputtext';
 import { ModelContext } from './contexts.ts';
-import { cheatsheet, HelpEntry, manualUrl } from '../help/cheatsheet.ts';
+import { HelpEntry, manualUrl, searchCheatsheet } from '../help/cheatsheet.ts';
 import { insertSnippet, snippetText } from '../language/active-editor.ts';
 
 export default function HelpPanel({className, style}: {className?: string, style?: CSSProperties}) {
@@ -13,16 +13,7 @@ export default function HelpPanel({className, style}: {className?: string, style
   if (!model) throw new Error('No model');
 
   const [query, setQuery] = useState('');
-  const words = query.toLowerCase().split(/\s+/).filter(w => w);
-  const sections = cheatsheet
-    .map(section => ({
-      ...section,
-      entries: section.entries.filter(e => {
-        const text = `${section.title} ${e.name ?? ''} ${e.sig} ${e.doc}`.toLowerCase();
-        return words.every(w => text.includes(w));
-      }),
-    }))
-    .filter(section => section.entries.length > 0);
+  const sections = searchCheatsheet(query);
 
   const insert = (entry: HelpEntry) => {
     if (!entry.insert) return;

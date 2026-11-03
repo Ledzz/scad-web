@@ -1,6 +1,6 @@
 // Portions of this file are Copyright 2021 Google LLC, and licensed under GPL2+. See COPYING.
 
-import React, { CSSProperties, useEffect, useState } from 'react';
+import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import {MultiLayoutComponentId, State, StatePersister} from '../state/app-state'
 import { Model } from '../state/model';
 import EditorPanel from './EditorPanel';
@@ -11,6 +11,7 @@ import PanelSwitcher from './PanelSwitcher';
 import { ConfirmDialog } from 'primereact/confirmdialog';
 import CustomizerPanel from './CustomizerPanel';
 import HelpPanel from './HelpPanel';
+import { registerWebMCPTools } from '../webmcp/webmcp-tools';
 
 
 export function App({initialState, statePersister, fs}: {initialState: State, statePersister: StatePersister, fs: FS}) {
@@ -18,6 +19,11 @@ export function App({initialState, statePersister, fs}: {initialState: State, st
   
   const model = new Model(fs, state, setState, statePersister);
   useEffect(() => model.init());
+
+  // Every render makes a new Model; the agent's tools always want the latest.
+  const latestModel = useRef(model);
+  latestModel.current = model;
+  useEffect(() => registerWebMCPTools(() => latestModel.current), []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

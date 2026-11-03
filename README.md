@@ -38,6 +38,13 @@ Licenses: see [LICENSES](./LICENSE).
   appended to the model after OpenSCAD's end-of-text mark, which is what `-D` does, rather than passed
   as `-D`: OpenSCAD keeps every `-D` it has seen in a global, so in a warm instance a reset value
   would keep its old override.
+- **WebMCP tools** for the browser's AI agent (`src/webmcp/webmcp-tools.ts`): read, write and edit
+  the code, render it, format it, get and set Customizer parameters, search the cheatsheet and list
+  the bundled libraries. They drive the same model as the UI, so the editor, viewer and Customizer
+  show what the agent did, and a run returns its errors with line numbers, the console and the
+  model's bounding box. They are registered where the browser has
+  [WebMCP](https://webmachinelearning.github.io/webmcp/) (`document.modelContext`; in Chrome, turn
+  on chrome://flags/#enable-webmcp-testing).
 
 Building the formatter (`npm run build:formatter`, included in `build:all`) needs rustup with the
 `wasm32-unknown-unknown` target, `wasm-bindgen` 0.2.129 and a clang with a wasm32 backend
