@@ -55,7 +55,6 @@ export default function ViewerPanel({className, style}: {className?: string, sty
   if (!model) throw new Error('No model');
 
   const state = model.state;
-  const [interactionPrompt, setInteractionPrompt] = useState('auto');
   const modelViewerRef = useRef<any>();
   const axesViewerRef = useRef<any>();
   const toastRef = useRef<Toast>(null);
@@ -147,7 +146,7 @@ export default function ViewerPanel({className, style}: {className?: string, sty
         if (clickDist > euclEps) {
           return;
         }
-        // Note: unlike the axes viewer, the model viewer has a prompt that makes the model wiggle around, we only fetch it to get the radius.
+        // The angles come from the axes viewer; the model viewer's orbit is only fetched for its radius.
         const axesOrbit = axesViewerRef.current.getCameraOrbit();
         const modelOrbit = modelViewerRef.current.getCameraOrbit();
         const [currentIndex, dist, radDist] = getClosestPredefinedOrbitIndex(axesOrbit.theta, axesOrbit.phi);
@@ -156,7 +155,6 @@ export default function ViewerPanel({className, style}: {className?: string, sty
         Object.assign(modelOrbit, {theta, phi});
         const newOrbit = modelViewerRef.current.cameraOrbit = axesViewerRef.current.cameraOrbit = modelOrbit.toString();
         toastRef.current?.show({severity: 'info', detail: `${name} view`, life: 1000,});
-        setInteractionPrompt('none');
       }
     }
     window.addEventListener('mousedown', onMouseDown);
@@ -214,7 +212,8 @@ export default function ViewerPanel({className, style}: {className?: string, sty
           height: '100%',
         }}
         camera-orbit={originalOrbit}
-        interaction-prompt={interactionPrompt}
+        // No hand that wiggles the model to hint at dragging.
+        interaction-prompt="none"
         environment-image="./skybox-lights.jpg"
         max-camera-orbit="auto 180deg auto"
         min-camera-orbit="auto 0deg auto"
