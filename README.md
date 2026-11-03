@@ -33,8 +33,11 @@ Licenses: see [LICENSES](./LICENSE).
   a signature to insert it at the cursor with tab stops, follow ↗ to the manual. Hovering a builtin
   in the editor shows the same entry. The data is `src/help/cheatsheet.ts`; `node
   tests/cheatsheet-check.mjs` runs every snippet through OpenSCAD (needs a native `openscad-nightly`).
-- Customizer values become `-D` overrides only when you actually change them (the number inputs used
-  to report every value on mount, after which editing that value in the code had no effect).
+- Customizer values become overrides only when you actually change them (the number inputs used
+  to report every value on mount, after which editing that value in the code had no effect). They are
+  appended to the model after OpenSCAD's end-of-text mark, which is what `-D` does, rather than passed
+  as `-D`: OpenSCAD keeps every `-D` it has seen in a global, so in a warm instance a reset value
+  would keep its old override.
 
 Building the formatter (`npm run build:formatter`, included in `build:all`) needs rustup with the
 `wasm32-unknown-unknown` target, `wasm-bindgen` 0.2.129 and a clang with a wasm32 backend

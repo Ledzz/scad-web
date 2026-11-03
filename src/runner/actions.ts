@@ -25,8 +25,6 @@ export const checkSyntax =
       activePath,
       sources,
     } = sargs;
-    
-    const content = '$preview=true;\n' + sources[0].content;
 
     const outFile = 'out.json';
     const job = spawnOpenSCAD({
@@ -59,9 +57,11 @@ export const checkSyntax =
           }
 
           res({
+            // The sources are checked as-is (no injected prefix lines), so
+            // OpenSCAD's line numbers already match the editor's.
             ...processMergedOutputs(result.mergedOutputs, {shiftSourceLines: {
-              sourcePath: sources[0].path,
-              skipLines: 1,
+              sourcePath: activePath,
+              skipLines: 0,
             }}),
             parameterSet,
           });
@@ -127,7 +127,14 @@ export const render =
     if (!source) throw new Error('Active path not found in sources!');
 
     if (source.content == null) throw new Error('Source content is null!');
-    const content = [...prefixLines, source.content].join('\n');
+    // The customizer's values, as -D would set them: OpenSCAD puts -D
+    // assignments after an end-of-text mark (\x03) at the end of the main
+    // file, where they replace the code's own values without a reassignment
+    // warning. They are not passed as -D because OpenSCAD keeps every -D in a
+    // global that is never cleared, so in the warm instance an override would
+    // outlive its removal.
+    const overrides = Object.entries(vars ?? {}).map(([k, v]) => `${k}=${formatValue(v)};`);
+    const content = [...prefixLines, source.content, ...(overrides.length ? ['\x03', ...overrides] : [])].join('\n');
 
     const actualRenderFormat = renderFormat == 'glb' || renderFormat == '3mf' ? 'off' : renderFormat;
     const stem = scadPath.replace(/\.scad$/, '').split('/').pop();
@@ -137,7 +144,6 @@ export const render =
       "-o", outFile,
       "--backend=manifold",
       "--export-format=" + (actualRenderFormat == 'stl' ? 'binstl' : actualRenderFormat),
-      ...(Object.entries(vars ?? {}).flatMap(([k, v]) => [`-D${k}=${formatValue(v)}`])),
       ...(features ?? []).map(f => `--enable=${f}`),
       ...(extraArgs ?? [])
     ]
