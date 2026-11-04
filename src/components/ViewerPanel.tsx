@@ -4,6 +4,9 @@ import { CSSProperties, useCallback, useContext, useEffect, useRef, useState } f
 import { ModelContext } from './contexts.ts';
 import { Toast } from 'primereact/toast';
 import { blurHashToImage, imageToBlurhash, imageToThumbhash, thumbHashToImage } from '../io/image_hashes.ts';
+import SectionControls, { sectionStep } from './SectionControls.tsx';
+import SectionPlane from './SectionPlane.tsx';
+import { applySection, Axis, axisSection, Bounds, boundsCenter, cameraPosition, clampSection, flipSection, modelBounds, Section } from './section-view.ts';
 
 declare global {
   namespace JSX {
@@ -81,11 +84,34 @@ export default function ViewerPanel({className, style}: {className?: string, sty
     setCachedImageHash(undefined);
   }
 
+  // Cross-section: the plane outlives turning it off and every new model; it
+  // is in model coordinates, kept where it cuts the model.
+  const [section, setSection] = useState<Section>();
+  const [sectioned, setSectioned] = useState(false);
+  const [bounds, setBounds] = useState<Bounds>();
+  const shownSection = sectioned && section && bounds && !state.is2D ? clampSection(section, bounds) : undefined;
+  const sectionStepSize = bounds ? sectionStep(Math.max(...bounds.max.map((x, i) => x - bounds.min[i]))) : 1;
+
+  // A plane through the middle, taking away the side the camera is on.
+  function sectionAcross(axis: Axis): Section {
+    const origin = boundsCenter(bounds!);
+    origin[axis] = Math.round(origin[axis] / sectionStepSize) * sectionStepSize;
+    const camera = cameraPosition(modelViewerRef.current);
+    return axisSection(axis, origin, camera && camera[axis] < origin[axis] ? -1 : 1);
+  }
+
+  // bounds is new with every model, which needs its materials clipped again.
+  const sectionKey = JSON.stringify(shownSection);
+  useEffect(() => {
+    if (modelViewerRef.current) applySection(modelViewerRef.current, shownSection);
+  }, [sectionKey, bounds]);
+
   const onLoad = useCallback(async (e: any) => {
     setLoadedUri(modelUri);
     console.log('onLoad', e);
 
     if (!modelViewerRef.current) return;
+    setBounds(modelBounds(modelViewerRef.current));
 
     const uri = await modelViewerRef.current.toDataURL('image/png', 0.5);
     const preview = {blurhash: await imageToBlurhash(uri)};
@@ -223,6 +249,26 @@ export default function ViewerPanel({className, style}: {className?: string, sty
       >
         <span slot="progress-bar"></span>
       </model-viewer>
+      {shownSection && (
+        <SectionPlane
+          viewer={modelViewerRef.current}
+          section={shownSection}
+          bounds={bounds!}
+          step={sectionStepSize}
+          onChange={setSection}
+        />
+      )}
+      {bounds && !state.is2D && (
+        <SectionControls
+          section={shownSection}
+          onToggle={() => {
+            if (!section) setSection(sectionAcross(2));
+            setSectioned(!sectioned);
+          }}
+          onAxis={axis => setSection(sectionAcross(axis))}
+          onFlip={() => setSection(flipSection(shownSection!))}
+        />
+      )}
       {state.view.showAxes && (
         <model-viewer
                 orientation="0deg -90deg 0deg"

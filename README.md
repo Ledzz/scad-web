@@ -38,6 +38,11 @@ Licenses: see [LICENSES](./LICENSE).
   appended to the model after OpenSCAD's end-of-text mark, which is what `-D` does, rather than passed
   as `-D`: OpenSCAD keeps every `-D` it has seen in a global, so in a warm instance a reset value
   would keep its old override.
+- **Cross-section view**, handled like Onshape's: the button in the viewer's top-left corner cuts the
+  model with a plane and hatches the cut. In the view, drag the plane's arrow (or its edge) to move it
+  and its two arcs to tilt it, in 5° steps; X, Y and Z put it back square to an axis, and the arrows
+  button keeps the other side. It stays on while you edit, so the cut follows the model as it
+  re-renders.
 - **WebMCP tools** for the browser's AI agent (`src/webmcp/webmcp-tools.ts`): read, write and edit
   the code, render it, format it, get and set Customizer parameters, search the cheatsheet and list
   the bundled libraries. They drive the same model as the UI, so the editor, viewer and Customizer

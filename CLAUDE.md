@@ -16,7 +16,7 @@ npm install
 npm run build:libs        # OpenSCAD WASM + library zips + fonts (once; libs/ and public/libraries/ are gitignored)
 npm run build:formatter   # Topiary -> public/formatter/ (needs the Rust toolchain below)
 npm start                 # dev server, http://localhost:4000 — NO hot reload, refresh by hand
-CI=true NODE_ENV=development npx jest   # 7 upstream e2e tests; stop the dev server first (same port)
+CI=true NODE_ENV=development npx jest   # 7 upstream e2e tests + cross-section; stop the dev server first (same port)
 node tests/cheatsheet-check.mjs         # every Help snippet through native OpenSCAD (needs openscad-nightly)
 ```
 
@@ -71,6 +71,17 @@ Native OpenSCAD for comparisons: `openscad-nightly` (2026.10.25, same version as
   old one), unregistered through an AbortSignal. App makes a new Model every render, so the tools take
   the latest one from a ref. They wait on its state (`previewing`/`rendering`/`checkingSyntax`), never
   on `Model.render`'s promise, which never settles when a newer run supersedes it.
+- **Cross-section** (`src/components/section-view.ts`, `SectionPlane.tsx`, `SectionControls.tsx`):
+  model-viewer has no clipping API, so it finds the element's `scene`/`renderer` symbols and works on
+  the three.js r163 objects inside — tied to the bundled `public/model-viewer.min.js`; re-check after
+  upgrading it. The renderer has no stencil buffer, so the cut is the mesh's back faces painted flat
+  and hatched (an `onBeforeCompile` patch after `#include <opaque_fragment>`), nudged 1e-6 towards the
+  camera so touching lazy-union solids don't z-fight; a slope-scaled nudge showed on every silhouette.
+  The plane (normal, two in-plane directions, origin it turns about) is kept in OpenSCAD coordinates
+  and moved to world space in `scene.onBeforeRender`, since the model moves when the camera target
+  does. The Onshape-style gizmo (outline, arrow to move, arcs to tilt) is an SVG overlay redrawn from
+  that same hook, sized in screen pixels; a drag reads the pointer's move along the handle's direction
+  on screen.
 - The single-layout TabMenu is controlled (`onTabChange`), so its highlight follows focus changes
   made in code.
 

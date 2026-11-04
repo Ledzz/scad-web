@@ -155,5 +155,32 @@ describe('e2e', () => {
     await page.waitForSelector('fieldset');
     await waitForLabel('myVar');
   }, longTimeout);
+
+  test('cross-section clips the model until turned off', async () => {
+    await loadSrc('difference() { cube(20, center = true); sphere(8); }');
+    await waitForViewer();
+    // The meshes of model-viewer's three.js scene that have a clipping plane.
+    const clippedMeshes = () => page.evaluate(() => {
+      const viewer = document.querySelector('model-viewer.main-viewer');
+      let scene;
+      for (let o = viewer; o && !scene; o = Object.getPrototypeOf(o)) {
+        const symbol = Object.getOwnPropertySymbols(o).find(s => s.description === 'scene');
+        if (symbol) scene = viewer[symbol];
+      }
+      let clipped = 0;
+      scene.model.traverse(o => { if (o.isMesh && o.material.clippingPlanes?.length) clipped++; });
+      return clipped;
+    });
+    const toggle = await page.waitForSelector('.section-controls button', {timeout: longTimeout});
+    expect(await clippedMeshes()).toBe(0);
+
+    await toggle.click();
+    await page.waitForSelector('svg.section-plane');
+    expect(await clippedMeshes()).toBeGreaterThan(0);
+
+    await toggle.click();
+    await page.waitForFunction(() => !document.querySelector('svg.section-plane'));
+    expect(await clippedMeshes()).toBe(0);
+  }, longTimeout);
 });
 

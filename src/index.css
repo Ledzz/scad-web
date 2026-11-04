@@ -12,3 +12,34 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* The viewer's cross-section controls cover part of the model: keep them small. */
+.section-controls .p-selectbutton .p-button {
+  padding: 0.4rem 0.75rem;
+}
+
+/* The section plane's handles and edge take the pointer; the rest of it lets
+   it through to the viewer. */
+g.section-plane-grip {
+  pointer-events: visiblePainted;
+  cursor: grab;
+  touch-action: none;
+}
+polygon.section-plane-grip {
+  pointer-events: stroke;
+  cursor: grab;
+  touch-action: none;
+}
+.section-plane-grip .line {
+  stroke-width: 2.5px;
+}
+.section-plane-grip:hover .line,
+.section-plane-grip.active .line {
+  stroke-width: 3.5px;
+}
+.section-plane:has(.section-plane-grip:hover) .section-plane-fill {
+  fill-opacity: 0.08;
+}
+.section-plane:has(.section-plane-grip.active) .section-plane-fill {
+  fill-opacity: 0.12;
+}
